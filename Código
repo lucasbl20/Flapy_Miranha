@@ -1,0 +1,182 @@
+import pygame
+import sys
+import random
+
+# Inicialização do Pygame
+pygame.init()
+
+# Configurações da tela
+SCREEN_WIDTH = 400
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Flappy Miranha")
+
+# Cores
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (220, 20, 60)
+BLUE = (25, 25, 112)
+GREEN = (0, 200, 0)
+
+# Relógio para controle de FPS
+clock = pygame.time.Clock()
+FPS = 60
+
+# Variáveis do jogo
+GRAVITY = 0.5
+FLAP_STRENGTH = -8
+PIPE_SPEED = -4
+PIPE_GAP = 150
+
+# Carregar fontes
+font = pygame.font.SysFont("Arial", 30)
+
+# Carregar a imagem do Miranha
+bird_image = pygame.image.load('bird.png')  # Imagem da cabeça do Miranha
+bird_image = pygame.transform.scale(bird_image, (40, 40))  # Ajusta o tamanho
+
+def draw_spiderman_background():
+    # Fundo vermelho na parte superior
+    pygame.draw.rect(screen, RED, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT // 2))
+    # Fundo azul na parte inferior
+    pygame.draw.rect(screen, BLUE, (0, SCREEN_HEIGHT // 2, SCREEN_WIDTH, SCREEN_HEIGHT // 2))
+    # Adicionar teias no fundo (linhas brancas)
+    for i in range(0, SCREEN_WIDTH, 40):
+        pygame.draw.line(screen, WHITE, (i, 0), (SCREEN_WIDTH // 2, SCREEN_HEIGHT), 1)
+        pygame.draw.line(screen, WHITE, (SCREEN_WIDTH - i, 0), (SCREEN_WIDTH // 2, SCREEN_HEIGHT), 1)
+
+def draw_text(text, x, y, color=BLACK):
+    label = font.render(text, True, color)
+    screen.blit(label, (x, y))
+
+class Web:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.width = 5
+        self.height = 10
+        self.speed = 10  # Velocidade da teia
+
+    def update(self):
+        # A teia vai em direção aos canos
+        self.x += self.speed
+
+    def draw(self):
+        pygame.draw.line(screen, WHITE, (self.x, self.y), (self.x + self.width, self.y), 3)
+
+class Bird:
+    def __init__(self):
+        self.x = 50
+        self.y = SCREEN_HEIGHT // 2
+        self.width = 40
+        self.height = 40
+        self.velocity = 0
+        self.image = bird_image
+        self.webs = []  # Lista de teias lançadas
+
+    def update(self):
+        self.velocity += GRAVITY
+        self.y += self.velocity
+
+        # Atualiza as teias
+        for web in self.webs:
+            web.update()
+
+    def flap(self):
+        self.velocity = FLAP_STRENGTH
+        # Lança uma teia
+        self.launch_web()
+
+    def launch_web(self):
+        # Cria uma nova teia saindo do personagem
+        web = Web(self.x + self.width, self.y + self.height // 2)
+        self.webs.append(web)
+
+    def draw(self):
+        screen.blit(self.image, (self.x, self.y))
+
+        # Desenha as teias lançadas
+        for web in self.webs:
+            web.draw()
+
+class Pipe:
+    def __init__(self, x):
+        self.x = x
+        self.height = random.randint(100, SCREEN_HEIGHT - PIPE_GAP - 100)
+        self.width = 50
+
+    def update(self):
+        self.x += PIPE_SPEED
+
+    def draw(self):
+        pygame.draw.rect(screen, GREEN, (self.x, 0, self.width, self.height))
+        pygame.draw.rect(screen, GREEN, (self.x, self.height + PIPE_GAP, self.width, SCREEN_HEIGHT - self.height - PIPE_GAP))
+
+def game_loop():
+    bird = Bird()
+    pipes = [Pipe(SCREEN_WIDTH)]
+    score = 0
+    running = True
+
+    while running:
+        draw_spiderman_background()  # Desenha o fundo estilizado
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                bird.flap()
+
+        bird.update()
+        for pipe in pipes:
+            pipe.update()
+
+        # Colisão e lógica dos canos
+        for pipe in pipes:
+            if (bird.x + bird.width > pipe.x and bird.x < pipe.x + pipe.width and
+                (bird.y < pipe.height or bird.y + bird.height > pipe.height + PIPE_GAP)):
+                running = False
+            if pipe.x + pipe.width < 0:
+                pipes.remove(pipe)
+                pipes.append(Pipe(SCREEN_WIDTH))
+                score += 1
+
+        if bird.y > SCREEN_HEIGHT or bird.y < 0:
+            running = False
+
+        # Desenha os elementos do jogo
+        bird.draw()
+        for pipe in pipes:
+            pipe.draw()
+
+        draw_text(f"Score: {score}", 10, 10)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    game_over(score)
+
+def game_over(score):
+    while True:
+        screen.fill(WHITE)
+        draw_text("Game Over!", SCREEN_WIDTH // 2 - 80, SCREEN_HEIGHT // 2 - 50, RED)
+        draw_text(f"Score: {score}", SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2, BLACK)
+
+        button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 60, SCREEN_HEIGHT // 2 + 50, 120, 40)
+        pygame.draw.rect(screen, GREEN, button_rect)
+        draw_text("Restart", SCREEN_WIDTH // 2 - 40, SCREEN_HEIGHT // 2 + 55, BLACK)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect.collidepoint(event.pos):
+                    game_loop()
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+if __name__ == "__main__":
+    game_loop()
