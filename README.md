@@ -1,6 +1,13 @@
 # Flapy_Miranha
 Um jogo inspirado no grande Flapy Bird mas do Homem Aranha :)
 
+
+
+
+
+
+
+
 Flappy Miranha: Um Jogo Estilo Flappy Bird com o Homem-Aranha
 
 Visão Geral: "Flappy Miranha" é uma adaptação do clássico jogo Flappy Bird, mas com um toque único: o protagonista é o Homem-Aranha, que utiliza suas habilidades de arremessar teias para navegar por obstáculos e vencer desafios. O jogo combina a jogabilidade viciante de Flappy Bird com o charme e a ação do super-herói, trazendo uma experiência divertida e dinâmica para os fãs do Homem-Aranha e para aqueles que amam jogos casuais.
